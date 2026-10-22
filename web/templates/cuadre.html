@@ -1,0 +1,82 @@
+{{ template "base" . }}
+
+{{ define "content" }}
+<div class="page-header">
+  <h2>Cuadre de caja</h2>
+  <button class="button primary" id="add-row">Agregar línea</button>
+</div>
+
+<div class="panel form-panel">
+  <div class="row-inline">
+    <label>
+      Base
+      <input id="baseValue" type="text" value="0" inputmode="numeric" />
+    </label>
+    <label>
+      Fecha
+      <input id="recordDate" type="date" />
+    </label>
+  </div>
+
+  <div class="cash-grid" id="cash-grid">
+    <div class="cash-row" data-name="Bancolombia">
+      <span>Bancolombia</span>
+      <input type="text" value="0" inputmode="numeric" class="cash-input" />
+    </div>
+    <div class="cash-row" data-name="BEMovil">
+      <span>BEMovil</span>
+      <input type="text" value="0" inputmode="numeric" class="cash-input" />
+    </div>
+    <div class="cash-row" data-name="Punto Red">
+      <span>Punto Red</span>
+      <input type="text" value="0" inputmode="numeric" class="cash-input" />
+    </div>
+    <div class="cash-row" data-name="Giros">
+      <span>Giros</span>
+      <input type="text" value="0" inputmode="numeric" class="cash-input" />
+    </div>
+    <div class="cash-row" data-name="PTM">
+      <span>PTM</span>
+      <input type="text" value="0" inputmode="numeric" class="cash-input" />
+    </div>
+    <div class="cash-row" data-name="PTM 2">
+      <span>PTM 2</span>
+      <input type="text" value="0" inputmode="numeric" class="cash-input" />
+    </div>
+    <div class="cash-row" data-name="Banco de Bogotá">
+      <span>Banco de Bogotá</span>
+      <input type="text" value="0" inputmode="numeric" class="cash-input" />
+    </div>
+    <div class="cash-row" data-name="Avícola">
+      <span>Avícola</span>
+      <input type="text" value="0" inputmode="numeric" class="cash-input" />
+    </div>
+    <div class="cash-row" data-name="Monedas">
+      <span>Monedas</span>
+      <input type="text" value="0" inputmode="numeric" class="cash-input" />
+    </div>
+    <div class="cash-row" data-name="Efectivo">
+      <span>Efectivo</span>
+      <input type="text" value="0" inputmode="numeric" class="cash-input" />
+    </div>
+  </div>
+
+  <div class="totals">
+    <div>
+      <label>Total</label>
+      <strong id="totalValue">$ 0</strong>
+    </div>
+    <div>
+      <label>Diferencia</label>
+      <strong id="differenceValue">$ 0</strong>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button class="button primary" id="saveCuadre">Guardar cuadre</button>
+    <button class="button secondary" id="clearCuadre">Limpiar</button>
+  </div>
+</div>
+
+<script src="/static/js/cuadre.js"></script>
+{{ end }}

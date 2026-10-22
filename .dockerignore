@@ -1,0 +1,15 @@
+**/.git
+**/.idea
+**/.vscode
+**/node_modules
+**/*.log
+**/*.tmp
+**/.DS_Store
+
+!web/
+!web/**
+!*.go
+!go.mod
+!go.sum
+!Dockerfile
+!README.md

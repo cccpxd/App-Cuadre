@@ -1,0 +1,21 @@
+Quiero que hagas una aplicación para hacer cuadres de caja en un corresponsal bancario, la aplicación debe tener un dasboard que tenga como principales funciones, hacer el cuadre de caja, mirar los cuadres ya hechos consultados con fecha, tener un apartado llamado avicola(después explico) y un apartado llamado configuración.
+
+
+Opción cuadre: Debe tener min 10 espacios para colocar el valor monetario que llevan las aplicaciones, una opción para colocar la base y que se pueda restar con el total
+de los 10 espacios, también se debe poder añadir o quitar espacios, se debe poder editar, la suma se debe ir mostrando a medida que se colocan los números.
+los espacios base son: 
+Bancolombia, bemovil,  punto red, Giros, PTM, PTM 2, Banco de Bogotá, avicola, monedas, efectivo.
+
+El apartado Avicola debe estar ligado a el espacio avicola de el apartado cuadre, y ahí se guardara los saldos que tendrá, se podrá sumar saldo, restar saldo. el espacio
+avicola en cuadre es lo que debe la avicola, eso se deberá sumar en el apartado avicola y tener registro de eso. 
+
+En el Apartado configuración deberá tener todas las opciones de calidad de vida.
+
+Este proyecto será hecho en GO, con gin.
+Se debe configurar para levantarlo en vercel. 
+La persistencia se hará en postgres, Las entidades en plural con mínimo 3 atributos, los atributos con nombres completos, sigue las practicas de  el libro Ramez Elmasri
+y Shamkant B. Navathe. 
+debes seguir el archivo skill-ss.txt que esta en la carpeta. 
+
+Haz toda la aplicación para que sea muy fácil de usar e intuitiva. 
+

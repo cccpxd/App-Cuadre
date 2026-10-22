@@ -1,0 +1,330 @@
+Skill: Structural Separation
+Overview
+Structural Separation is a software design principle used to organize programs so that each function or module has a clear responsibility, operates at one level of abstraction, and does not depend unnecessarily on input/output mechanisms or unrelated parts of the program.
+
+It is a beginner-friendly umbrella concept that introduces several professional software design principles at once:
+
+Separation of Concerns
+Input/Output Decoupling
+Single Responsibility Principle (SRP)
+High Cohesion
+Low Coupling
+One Level of Abstraction per Function
+Dependency Inversion (in advanced applications)
+Structural separation applies to any programming language but is often taught in the context of Go (Golang), where the simplicity of the language makes the principle especially visible.
+
+Core Definition
+Structural separation is the practice of dividing a program into functions or modules with clear responsibilities and appropriate levels of abstraction. In a structurally separated program, input, processing, and output are not mixed together; reusable logic receives data through parameters and returns results; and high-level functions coordinate lower-level functions without containing their details.
+
+Short Slogans
+Keep different jobs in different places.
+main starts the program; it should not be the program.
+Functions that calculate should not communicate.
+Ask in one place, calculate in another, display in another.
+Keep the core independent from the interface.
+If a function prints the answer, it has not returned the answer.
+Key Concepts
+Concern
+A concern is a structural or design responsibility inside the code: an aspect of the program that must be organized and maintained.
+
+Examples:
+
+reading input
+validating data
+calculating a result
+making a decision
+formatting output
+displaying output
+controlling program flow
+Functionality
+A functionality is an externally observable behavior of the system: something the user or another system can see, request, or benefit from.
+
+Examples:
+
+compute a final grade
+convert Celsius to Fahrenheit
+generate a report
+show a dashboard
+Relationship
+A functionality may involve several concerns.
+The same concern may support several functionalities.
+Users interact with functionalities; they should not need to know how internal concerns are handled.
+text
+Functionality = external behavior
+Concern       = internal responsibility
+The Three Basic Concerns
+Most beginner programs contain three basic concerns:
+
+text
+Input       -> get data
+Processing  -> calculate, decide, validate, transform
+Output      -> show or send results
+A structurally separated program keeps these concerns apart.
+
+Function Categories
+A structurally separated program typically has four kinds of functions:
+
+Entry-point function — main, which only starts the program.
+Coordination (orchestration) functions — describe the program flow.
+Input functions — obtain data (console, file, sensor, API, tests).
+Processing (business logic) functions — pure functions with parameters and return values.
+Output (presentation) functions — format and deliver results.
+Rules of Structural Separation
+main should be short and only start the program.
+High-level functions describe what the program does.
+Low-level functions handle how specific tasks are done.
+Input, processing, and output must be separated.
+Business logic must not depend on the console, files, sensors, or any specific I/O.
+Business logic functions receive parameters and return values.
+Business logic functions must not call fmt.Scan or fmt.Println (or equivalents).
+A function that reads input may combine prompting and reading, because both belong to one user-interaction concern.
+Do not mix multiple abstraction levels in the same function.
+Function names should reveal a single responsibility. Names containing "and" often signal mixed concerns.
+Business rules (thresholds, formulas, valid ranges) should live in dedicated functions, not inside input or output code.
+Global variables should be avoided; data must flow through parameters and return values.
+What Structural Separation Is NOT
+It is not simply "using more functions." Having many helper functions does not guarantee structural separation.
+It is not banning fmt.Scan and fmt.Println from the entire program.
+It is not premature abstraction. Interfaces and layers should appear only when they solve real coupling problems.
+It is not the same as clean architecture, but it is a foundation for it.
+Related Professional Principles
+Separation of Concerns
+Different responsibilities should be handled by different parts of the program.
+
+Single Responsibility Principle (SRP)
+A function or module should have one reason to change.
+
+High Cohesion
+Everything inside a function should belong to the same purpose.
+
+Low Coupling
+A function should depend on as little external context as possible.
+
+I/O Decoupling
+Core logic should not depend on any specific input or output mechanism.
+
+One Level of Abstraction per Function
+A function should not mix high-level program flow with low-level implementation details.
+
+Dependency Inversion (SOLID)
+High-level modules should depend on abstractions (interfaces), not on concrete implementations.
+
+Ports and Adapters / Hexagonal Architecture
+The core logic sits in the center; external systems (console, files, sensors, dashboards) connect through adapters. Structural separation is a beginner-level entry point to this idea.
+
+Anti-Patterns
+1. Everything in main
+All input, processing, and output written directly inside main.
+
+2. Functions that ask for their own input
+go
+func Compute() {
+    var x float64
+    fmt.Scan(&x)
+    ...
+}
+Such a function cannot be reused with a different input source.
+
+3. Functions that print instead of returning
+go
+func Add(a, b int) {
+    fmt.Println(a + b)
+}
+The value cannot be reused in further computation.
+
+4. Function names containing "and"
+Examples: ComputeAndShowFinalGrade, ReadAndValidateGrade. Usually a sign of mixed responsibilities.
+
+5. Business rules hidden inside I/O functions
+The passing threshold, valid range, or formula living inside an input or output function.
+
+6. Global variables used to move data between functions
+Signals missing parameters and return values.
+
+7. Repeated code
+Suggests a missing abstraction or a missing helper.
+
+8. Helpers that still mix I/O with logic
+Having helper functions is not enough. Each helper must have a single, clean concern.
+
+Example — Not Structurally Separated (Go)
+go
+package main
+
+import "fmt"
+
+func main() {
+    var g1, g2, g3 float64
+
+    fmt.Print("Enter grade 1: ")
+    fmt.Scan(&g1)
+    for g1 < 0.0 || g1 > 5.0 {
+        fmt.Println("Invalid grade.")
+        fmt.Print("Enter grade 1: ")
+        fmt.Scan(&g1)
+    }
+    // ... same for g2, g3
+
+    final := g1*0.30 + g2*0.30 + g3*0.40
+
+    if final >= 3.0 {
+        fmt.Printf("Final grade: %.2f. Passed.\n", final)
+    } else {
+        fmt.Printf("Final grade: %.2f. Failed.\n", final)
+    }
+}
+Problems:
+
+everything in main
+input, validation, calculation, decision, and output are mixed
+business rules (valid range, formula, threshold) live inside I/O code
+impossible to test the calculation without simulating console input
+impossible to reuse in a different context (web, IoT, file)
+Example — Helpers That Still Violate Structural Separation
+go
+func ReadValidGrade(prompt string) float64 {
+    var grade float64
+    fmt.Print(prompt)
+    fmt.Scan(&grade)
+    for grade < 0.0 || grade > 5.0 {
+        fmt.Println("Invalid grade.")
+        fmt.Print(prompt)
+        fmt.Scan(&grade)
+    }
+    return grade
+}
+
+func ComputeAndShowFinalGrade(g1, g2, g3 float64) {
+    final := g1*0.30 + g2*0.30 + g3*0.40
+    if final >= 3.0 {
+        fmt.Printf("Final grade: %.2f. Passed.\n", final)
+    } else {
+        fmt.Printf("Final grade: %.2f. Failed.\n", final)
+    }
+}
+Even with helpers, this is not structurally separated:
+
+ReadValidGrade couples input with the business rule for valid grades.
+ComputeAndShowFinalGrade mixes calculation, decision, and output.
+Business rules (passing threshold, formula) are hidden inside I/O code.
+Logic cannot be tested or reused without the console.
+Example — Structurally Separated Design (Go, Advanced)
+Architecture:
+
+text
+Coordination
+  main
+  RunFinalGradeCalculator(reader FloatReader, presenter ResultPresenter)
+
+Input abstraction
+  FloatReader interface
+    ConsoleFloatReader
+    (future: FileFloatReader, MockFloatReader)
+
+Input helper
+  ReadFloatInRange(reader FloatReader, prompt string, min, max float64) float64
+
+Business logic (pure)
+  AreValidWeights(weights []float64) bool
+  ComputeFinalGrade(grades []float64, weights []float64) (float64, error)
+  IsPassing(finalGrade float64) bool
+  BuildStudentResult(finalGrade float64, passed bool) StudentResult
+
+Data model
+  StudentResult { FinalGrade float64; Passed bool }
+
+Presentation abstraction
+  ResultPresenter interface
+    TextPresenter
+    JSONPresenter
+Program flow:
+
+text
+main
+  create ConsoleFloatReader
+  create TextPresenter (or JSONPresenter)
+  RunFinalGradeCalculator(reader, presenter)
+
+RunFinalGradeCalculator(reader, presenter)
+  read grades via ReadFloatInRange(reader, ...)
+  weights := [0.30, 0.30, 0.40]
+  final, _ := ComputeFinalGrade(grades, weights)
+  passed := IsPassing(final)
+  result := BuildStudentResult(final, passed)
+  output, _ := presenter.Present(result)
+  fmt.Println(output)
+Properties:
+
+pure business logic
+injected input source and injected presenter
+no printing or scanning inside business logic
+easily testable
+easily extendable (add new readers or presenters without changing logic)
+SOLID Mapping
+S — Single Responsibility Principle: each function does one thing.
+O — Open/Closed Principle: new input sources or output formats are added without changing existing logic.
+L — Liskov Substitution Principle: any implementation of FloatReader or ResultPresenter can replace another.
+I — Interface Segregation Principle: small, focused interfaces (FloatReader, ResultPresenter).
+D — Dependency Inversion Principle: high-level orchestration depends on abstractions, not on concrete I/O.
+Structural Separation Checklist
+A function or program has good structural separation if:
+
+main is short and delegates to a run function.
+High-level functions describe the flow.
+Low-level details are hidden in helpers.
+Input, processing, and output are separate concerns.
+Business logic uses parameters and return values.
+Business logic does not use fmt.Scan or fmt.Println.
+Business rules live in dedicated functions.
+Function names describe a single responsibility.
+Helper functions have one cohesive concern.
+The program can be tested without simulating I/O.
+The program can be reused in a different interface (web, file, IoT).
+Dependencies flow from concrete (main) to abstract (interfaces).
+Grading Rubric (Educational Use)
+Excellent
+
+Clear separation of input, processing, and output.
+main is short.
+Business rules are isolated.
+Logic is testable and reusable.
+Interfaces used where appropriate to decouple I/O.
+Acceptable
+
+Some minor mixing of concerns.
+Most calculation logic is separated.
+Helper functions do not scan input, though they may print results.
+Needs Improvement
+
+Functions ask for their own input.
+Functions print instead of returning.
+Business rules live inside I/O code.
+Poor
+
+All logic inside main.
+No separation between I/O and computation.
+Global variables used to share data across functions.
+Teaching Guidance (For LLMs)
+When asked to help someone design or refactor a program using structural separation:
+
+First identify the concerns present in the code.
+Identify functions with mixed responsibilities (especially names containing "and").
+Locate business rules embedded in I/O code.
+Propose extracting pure functions for business logic.
+Propose an orchestration function to describe the flow.
+Keep main short: at most a few lines.
+Introduce interfaces only when there is real coupling to eliminate (for example, coupling to the console, files, or specific external systems).
+Prefer parameters and return values over shared state.
+Avoid premature abstraction; introduce interfaces when they solve a concrete decoupling need.
+Provide before/after comparisons and explain the rationale in terms of concerns and coupling.
+Summary
+Structural separation is a design habit that produces code which is:
+
+easier to read,
+easier to test,
+easier to reuse,
+easier to extend,
+and independent from any specific input or output mechanism.
+Its central idea is simple:
+
+Each function should have one clear responsibility and one level of abstraction, and the core logic of a program should be independent from the interfaces it uses to communicate with the outside world.

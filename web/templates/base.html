@@ -1,0 +1,28 @@
+{{ define "base" }}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ .title }}</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand-top">Cuadre</div>
+    <nav class="topnav">
+      <a href="/">Dashboard</a>
+      <a href="/cuadre">Cuadre</a>
+      <a href="/historial">Historial</a>
+      <a href="/avicola">Avícola</a>
+      <a href="/configuracion">Configuración</a>
+    </nav>
+  </div>
+  <div class="app-shell">
+    <main class="main-panel">
+      {{ template "content" . }}
+    </main>
+  </div>
+</body>
+</html>
+{{ end }}

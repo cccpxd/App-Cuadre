@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ .title }}</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <h1>App Cuadre</h1>
+      </div>
+      <nav>
+        <a href="/">Dashboard</a>
+        <a href="/cuadre">Cuadre</a>
+        <a href="/historial">Historial</a>
+        <a href="/avicola">Avícola</a>
+        <a href="/configuracion">Configuración</a>
+      </nav>
+    </aside>
+    <main class="main-panel">
+      {{ template "content" . }}
+    </main>
+  </div>
+</body>
+</html>
