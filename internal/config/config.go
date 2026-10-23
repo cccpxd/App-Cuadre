@@ -17,11 +17,24 @@ func Load() (Config, error) {
 		port = ":" + port
 	}
 
-	cfg := Config{
+	return Config{
 		ServerPort:  port,
-		DatabaseURL: getEnv("DATABASE_URL", "host=localhost user=postgres password=postgres dbname=appcuadre port=5432 sslmode=disable"),
+		DatabaseURL: resolveDatabaseURL(),
+	}, nil
+}
+
+func resolveDatabaseURL() string {
+	for _, key := range []string{"DATABASE_URL", "POSTGRES_URL", "POSTGRES_PRISMA_URL", "PGDATABASE_URL"} {
+		if value := strings.TrimSpace(getEnv(key, "")); value != "" {
+			return value
+		}
 	}
-	return cfg, nil
+
+	if strings.EqualFold(getEnv("APP_ENV", ""), "production") || getEnv("VERCEL", "") != "" {
+		return ""
+	}
+
+	return "host=db user=postgres password=postgres dbname=appcuadre port=5432 sslmode=disable"
 }
 
 func getEnv(key, fallback string) string {
