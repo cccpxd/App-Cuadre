@@ -198,7 +198,8 @@ input, select {
 .history-panel {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 20px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
 }
 
 .history-toolbar {
@@ -207,19 +208,26 @@ input, select {
   align-items: end;
   gap: 16px;
   flex-wrap: wrap;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
 }
 
 .history-date-filter {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  min-width: 190px;
+  min-width: 210px;
 }
 
 .history-date-filter label {
   color: var(--muted);
-  font-size: 0.82rem;
-  font-weight: 600;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.history-date-filter input {
+  min-height: 42px;
 }
 
 .history-actions {
@@ -230,39 +238,45 @@ input, select {
 
 .history-list {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
   gap: 16px;
 }
 
 .history-card {
   background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: 18px;
   padding: 16px;
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.06);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.history-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.09);
 }
 
 .history-card-header {
   display: flex;
   justify-content: space-between;
-  align-items: start;
+  align-items: flex-start;
   gap: 12px;
   margin-bottom: 14px;
 }
 
 .history-number {
   display: inline-block;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--primary);
-  font-weight: 700;
+  font-weight: 800;
   margin-bottom: 8px;
 }
 
 .history-card h3 {
   margin: 0;
-  font-size: 1.2rem;
+  font-size: 1.15rem;
   color: var(--text);
 }
 
@@ -273,6 +287,7 @@ input, select {
   border-radius: 999px;
   font-size: 0.72rem;
   font-weight: 700;
+  white-space: nowrap;
 }
 
 .status-badge.positive {
@@ -297,6 +312,10 @@ input, select {
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 10px 8px;
+  min-height: 82px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .metric-box span {
@@ -304,27 +323,32 @@ input, select {
   color: var(--muted);
   font-size: 0.7rem;
   margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .metric-box strong {
-  font-size: 0.98rem;
+  font-size: 0.95rem;
   color: var(--text);
+  line-height: 1.3;
+  word-break: break-word;
 }
 
 .history-note {
   background: #eef4ff;
   border: 1px solid #dbeafe;
   color: #1e3a8a;
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 10px 12px;
-  font-size: 0.83rem;
+  font-size: 0.82rem;
+  line-height: 1.5;
 }
 
 .history-empty {
   border: 1px dashed var(--border);
   background: #f8fafc;
   color: var(--muted);
-  border-radius: 14px;
+  border-radius: 16px;
   padding: 32px 20px;
   text-align: center;
   font-weight: 600;
