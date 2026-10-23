@@ -1,12 +1,15 @@
 package main
 
 import (
+	"io/fs"
 	"log"
+	"net/http"
 
 	"appcuadre/internal/config"
 	"appcuadre/internal/database"
 	"appcuadre/internal/handlers"
 	"appcuadre/internal/models"
+	"appcuadre/web"
 
 	"github.com/gin-gonic/gin"
 )
@@ -15,10 +18,6 @@ func main() {
 	cfg, err := config.Load()
 	if err != nil {
 		log.Fatal(err)
-	}
-
-	if cfg.DatabaseURL == "" {
-		log.Fatal("No hay DATABASE_URL configurada. En local usa Docker Compose. En producción usa una base PostgreSQL real (por ejemplo Supabase/Neon/Railway) y configura DATABASE_URL en el entorno.")
 	}
 
 	db, err := database.Connect(cfg.DatabaseURL)
@@ -37,8 +36,13 @@ func main() {
 
 	r := gin.Default()
 
-	r.Static("/static", "./web/static")
-	renderer, err := handlers.NewTemplateRenderer("./web/templates")
+	staticFiles, err := fs.Sub(web.Files, "static")
+	if err != nil {
+		log.Fatal(err)
+	}
+	r.StaticFS("/static", http.FS(staticFiles))
+
+	renderer, err := handlers.NewTemplateRenderer(web.Files, "templates")
 	if err != nil {
 		log.Fatal(err)
 	}
