@@ -1,5 +1,6 @@
 const balanceBox = document.getElementById('avicolaBalance');
 const historyBox = document.getElementById('avicolaHistory');
+const dateFilter = document.getElementById('avicolaDateFilter');
 
 function formatMoney(value) {
   return new Intl.NumberFormat('es-CO', {
@@ -9,25 +10,59 @@ function formatMoney(value) {
   }).format(Number(value || 0));
 }
 
+function formatDate(dateString) {
+  if (!dateString) {
+    return '';
+  }
+
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) {
+    return dateString;
+  }
+
+  return date.toLocaleString('es-CO', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
+
 async function loadAvicolaData() {
   if (!historyBox || !balanceBox) {
     return;
   }
 
-  const response = await fetch('/api/avicola');
-  const movements = await response.json();
+  const params = new URLSearchParams();
+  const selectedDate = dateFilter ? dateFilter.value : '';
+  if (selectedDate) {
+    params.set('date', selectedDate);
+  }
+
+  const response = await fetch(`/api/avicola?${params.toString()}`);
+  const payload = await response.json();
+  const movements = Array.isArray(payload.movements) ? payload.movements : [];
 
   historyBox.innerHTML = '';
   movements.forEach(item => {
     const signedAmount = item.movement_type === 'egreso' ? -(Number(item.amount) || 0) : Number(item.amount) || 0;
     const row = document.createElement('div');
     row.className = 'history-item';
-    row.innerHTML = `<strong>${item.movement_type}</strong> - ${item.description}<br><small>${item.entry_date}</small><br><span>${formatMoney(signedAmount)}</span>`;
+    row.innerHTML = `
+      <strong>${item.movement_type}</strong>
+      <span>${item.description}</span>
+      <small>${formatDate(item.entry_date)}</small>
+      <span>${formatMoney(signedAmount)}</span>
+    `;
     historyBox.appendChild(row);
   });
 
-  const currentBalance = movements.length > 0 ? Number(movements[0].balance || 0) : 0;
-  balanceBox.textContent = formatMoney(currentBalance);
+  if (movements.length === 0) {
+    historyBox.innerHTML = '<div class="empty-state-panel"><p>No hay movimientos para esta fecha.</p></div>';
+  }
+
+  balanceBox.textContent = formatMoney(Number(payload.balance || 0));
 }
 
 const saveButton = document.getElementById('saveAvicolaMovement');
@@ -57,6 +92,14 @@ if (saveButton) {
   });
 }
 
+if (dateFilter) {
+  dateFilter.addEventListener('change', loadAvicolaData);
+}
+
 if (historyBox && balanceBox) {
+  const today = new Date().toISOString().slice(0, 10);
+  if (dateFilter) {
+    dateFilter.value = today;
+  }
   loadAvicolaData();
 }

@@ -110,12 +110,28 @@ func GetCuadre(c *gin.Context) {
 }
 
 func ListAvicola(c *gin.Context) {
-	movements, err := services.ListAvicolaMovements()
+	selectedDate := strings.TrimSpace(c.Query("date"))
+	movements, err := services.ListAvicolaMovements(selectedDate)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, movements)
+
+	if selectedDate == "" {
+		selectedDate = time.Now().Format("2006-01-02")
+	}
+
+	balance, err := services.GetAvicolaBalance(selectedDate)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"balance":   balance,
+		"movements": movements,
+		"date":      selectedDate,
+	})
 }
 
 func CreateAvicolaMovement(c *gin.Context) {
