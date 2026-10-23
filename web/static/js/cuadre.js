@@ -22,21 +22,24 @@ function parseNumericExpression(rawValue) {
   }
 
   const cleaned = String(rawValue)
-    .replace(/\s+/g, '')
-    .replace(/\./g, '')
-    .replace(/,/g, '.')
-    .replace(/[^0-9+\-]/g, '');
-
+      .replace(/\s+/g, '')
+      .replace(/[^0-9+\-.,]/g, '')
+      .replace(/\./g, '')
+      .replace(/,(?=.*,)/g, '')
+      .replace(/,/g, '.')
+      .replace(/(^|[+\-])0+(?=\d)/g, '$1')
+      .replace(/[+\-]+$/, '');
   if (cleaned === '' || cleaned === '+' || cleaned === '-' || cleaned === '+-' || cleaned === '-+') {
     return 0;
   }
 
-  try {
-    const result = Function(`"use strict"; return (${cleaned});`)();
-    return Number.isFinite(result) ? result : 0;
-  } catch {
+  const terms = cleaned.match(/[+-]?\d*\.?\d+/g);
+  if (!terms) {
     return 0;
   }
+
+  const result = terms.reduce((sum, term) => sum + parseFloat(term), 0);
+  return Number.isFinite(result) ? result : 0;
 }
 
 function formatNumberInput(value) {
