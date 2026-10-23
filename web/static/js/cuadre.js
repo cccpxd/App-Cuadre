@@ -175,7 +175,8 @@ document.getElementById('saveCuadre').addEventListener('click', async () => {
     record_date: rawDate ? new Date(`${rawDate}T12:00:00`).toISOString() : new Date().toISOString(),
     base_value: getInputValue(baseValueInput),
     notes: 'Cuadre generado desde la interfaz',
-    entries
+    entries,
+    prepared_by: document.getElementById('preparedBy').value.trim(),
   };
 
   const response = await fetch('/api/cuadres', {

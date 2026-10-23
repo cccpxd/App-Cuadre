@@ -67,6 +67,7 @@ function buildCard(record) {
   const header = document.createElement('div');
   header.className = 'history-card-header';
 
+
   const titleBox = document.createElement('div');
   const number = document.createElement('span');
   number.className = 'history-number';
@@ -75,6 +76,10 @@ function buildCard(record) {
   title.textContent = formatDate(record.record_date);
   titleBox.appendChild(number);
   titleBox.appendChild(title);
+  const author = document.createElement('p');
+  author.className = 'history-author';
+  author.textContent = `Hecho por: ${record.prepared_by || 'Sin registrar'}`;
+  titleBox.appendChild(author);
 
   const difference = Number(record.difference || 0);
   const badge = document.createElement('span');

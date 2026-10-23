@@ -74,7 +74,15 @@ func CreateCuadre(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
+	record.PreparedBy = strings.TrimSpace(record.PreparedBy)
+	if record.PreparedBy == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Indica quién hizo el cuadre"})
+		return
+	}
+	if len([]rune(record.PreparedBy)) > 100 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "El nombre del responsable no puede pasar de 100 caracteres"})
+		return
+	}
 	if len(record.Entries) == 0 {
 		record.Entries = services.BuildDefaultCashBoxEntries()
 	}

@@ -502,3 +502,9 @@ input, select {
   .dashboard-grid { grid-template-columns: 1fr; }
   .cards-grid { grid-template-columns: 1fr; }
 }
+
+.history-author {
+  margin: 4px 0 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
