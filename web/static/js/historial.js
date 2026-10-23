@@ -2,6 +2,29 @@ function formatMoney(value) {
   return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(Number(value || 0));
 }
 
+function formatDate(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+  return date.toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric', timeZone: 'UTC' });
+}
+
+function buildMetric(label, value) {
+  const box = document.createElement('div');
+  box.className = 'metric-box';
+
+  const title = document.createElement('span');
+  title.textContent = label;
+
+  const amount = document.createElement('strong');
+  amount.textContent = formatMoney(value);
+
+  box.appendChild(title);
+  box.appendChild(amount);
+  return box;
+}
+
 function buildDetail(record) {
   const detail = document.createElement('div');
   detail.style.display = 'none';
@@ -37,53 +60,105 @@ function buildDetail(record) {
   return detail;
 }
 
-async function loadHistory() {
+function buildCard(record) {
+  const card = document.createElement('div');
+  card.className = 'history-card';
+
+  const header = document.createElement('div');
+  header.className = 'history-card-header';
+
+  const titleBox = document.createElement('div');
+  const number = document.createElement('span');
+  number.className = 'history-number';
+  number.textContent = `Cuadre #${record.id}`;
+  const title = document.createElement('h3');
+  title.textContent = formatDate(record.record_date);
+  titleBox.appendChild(number);
+  titleBox.appendChild(title);
+
+  const difference = Number(record.difference || 0);
+  const badge = document.createElement('span');
+  badge.className = 'status-badge ' + (difference >= 0 ? 'positive' : 'negative');
+  badge.textContent = difference > 0 ? 'Sobrante' : difference < 0 ? 'Faltante' : 'Cuadrado';
+
+  header.appendChild(titleBox);
+  header.appendChild(badge);
+
+  const metrics = document.createElement('div');
+  metrics.className = 'history-metrics';
+  metrics.appendChild(buildMetric('Base', record.base_value));
+  metrics.appendChild(buildMetric('Total', record.total_value));
+  metrics.appendChild(buildMetric('Diferencia', record.difference));
+
+  card.appendChild(header);
+  card.appendChild(metrics);
+
+  if (record.notes) {
+    const note = document.createElement('div');
+    note.className = 'history-note';
+    note.textContent = record.notes;
+    card.appendChild(note);
+  }
+
+  const detail = buildDetail(record);
+
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'button secondary';
+  button.style.marginTop = '12px';
+  button.textContent = 'Ver detalle';
+  button.addEventListener('click', () => {
+    const isHidden = detail.style.display === 'none';
+    detail.style.display = isHidden ? 'block' : 'none';
+    button.textContent = isHidden ? 'Ocultar detalle' : 'Ver detalle';
+  });
+
+  card.appendChild(button);
+  card.appendChild(detail);
+  return card;
+}
+
+async function loadHistory(date) {
   const container = document.getElementById('cuadreHistory');
   if (!container) {
     return;
   }
 
-  const response = await fetch('/api/cuadres');
+  const url = date ? `/api/cuadres?date=${encodeURIComponent(date)}` : '/api/cuadres';
+  const response = await fetch(url);
   const records = await response.json();
 
   container.innerHTML = '';
   if (!records || records.length === 0) {
-    container.innerHTML = '<div class="history-item">No hay cuadres registrados.</div>';
+    const empty = document.createElement('div');
+    empty.className = 'history-empty';
+    empty.textContent = date ? 'No hay cuadres para esa fecha.' : 'No hay cuadres registrados.';
+    container.appendChild(empty);
     return;
   }
 
-  records.forEach(record => {
-    const item = document.createElement('div');
-    item.className = 'history-item';
+  records.forEach(record => container.appendChild(buildCard(record)));
+}
 
-    const summary = document.createElement('div');
-    summary.innerHTML = `
-      <strong>${record.record_date}</strong><br>
-      Base: ${formatMoney(record.base_value)}<br>
-      Total: ${formatMoney(record.total_value)}<br>
-      Diferencia: ${formatMoney(record.difference)}
-    `;
+function initHistory() {
+  const dateInput = document.getElementById('historyDateFilter');
+  const applyButton = document.getElementById('applyHistoryFilter');
+  const clearButton = document.getElementById('clearHistoryFilter');
 
-    const detail = buildDetail(record);
+  if (applyButton && dateInput) {
+    applyButton.addEventListener('click', () => loadHistory(dateInput.value));
+  }
 
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'button secondary';
-    button.style.marginTop = '10px';
-    button.textContent = 'Ver detalle';
-    button.addEventListener('click', () => {
-      const isHidden = detail.style.display === 'none';
-      detail.style.display = isHidden ? 'block' : 'none';
-      button.textContent = isHidden ? 'Ocultar detalle' : 'Ver detalle';
+  if (clearButton && dateInput) {
+    clearButton.addEventListener('click', () => {
+      dateInput.value = '';
+      loadHistory('');
     });
+  }
 
-    item.appendChild(summary);
-    item.appendChild(button);
-    item.appendChild(detail);
-    container.appendChild(item);
-  });
+  loadHistory('');
 }
 
 if (document.getElementById('cuadreHistory')) {
-  loadHistory();
+  initHistory();
 }
