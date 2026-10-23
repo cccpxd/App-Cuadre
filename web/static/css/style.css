@@ -188,6 +188,115 @@ input, select {
   flex: 1;
 }
 
+.avicola-shell {
+  display: grid;
+  gap: 20px;
+}
+
+.avicola-form-panel {
+  background: linear-gradient(135deg, rgba(29, 78, 216, 0.08), rgba(37, 99, 235, 0.02));
+  border: 1px solid rgba(96, 165, 250, 0.3);
+}
+
+.panel-kicker {
+  display: inline-block;
+  margin-bottom: 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+
+.avicola-row-inline {
+  align-items: end;
+}
+
+.avicola-row-inline label {
+  min-width: 180px;
+}
+
+.avicola-row-inline select,
+.avicola-row-inline input {
+  background: rgba(255, 255, 255, 0.78);
+  border-color: rgba(148, 163, 184, 0.6);
+}
+
+.avicola-balance-panel {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+}
+
+.balance-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.28);
+}
+
+#avicolaBalance {
+  display: block;
+  margin-top: 8px;
+  font-size: clamp(1.9rem, 2.5vw, 2.6rem);
+  line-height: 1.1;
+  color: var(--success);
+}
+
+.balance-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+  color: #166534;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.avicola-history {
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 14px;
+}
+
+.history-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.04);
+}
+
+.history-item strong {
+  color: var(--text);
+  text-transform: capitalize;
+}
+
+.history-item small {
+  color: var(--muted);
+}
+
+.history-item span {
+  margin-top: auto;
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--primary);
+}
+
+.history-item:nth-child(odd) span {
+  color: var(--success);
+}
+
+.history-item:nth-child(even) span {
+  color: var(--danger);
+}
+
 .totals {
   display: flex;
   justify-content: space-between;
