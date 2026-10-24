@@ -1,13 +1,54 @@
+let allRecords = [];
+let selectedDay = '';
+
 function formatMoney(value) {
   return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(Number(value || 0));
 }
 
-function formatDate(value) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value;
+function parseRecordDate(record) {
+  const raw = record && (record.record_date || record.created_at);
+  if (!raw) {
+    return null;
   }
-  return date.toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric', timeZone: 'UTC' });
+  const date = new Date(raw);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function toDateKey(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function todayKey() {
+  return toDateKey(new Date());
+}
+
+function dateFromKey(key) {
+  const [year, month, day] = String(key).split('-').map(Number);
+  if (!year || !month || !day) {
+    return null;
+  }
+  return new Date(year, month - 1, day);
+}
+
+function formatFullDate(date) {
+  return date.toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' });
+}
+
+function formatTime(date) {
+  return date.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+}
+
+function formatDayHeading(date) {
+  if (!date) {
+    return 'Cuadres sin fecha';
+  }
+  const label = date.toLocaleDateString('es-CO', { day: 'numeric', month: 'long' });
+  return date.getFullYear() === new Date().getFullYear()
+      ? `Cuadres del ${label}`
+      : `Cuadres del ${label} de ${date.getFullYear()}`;
 }
 
 function buildMetric(label, value) {
@@ -60,20 +101,21 @@ function buildDetail(record) {
   return detail;
 }
 
-function buildCard(record) {
+function buildCard(record, date) {
   const card = document.createElement('div');
   card.className = 'history-card';
 
   const header = document.createElement('div');
   header.className = 'history-card-header';
 
-
   const titleBox = document.createElement('div');
   const number = document.createElement('span');
   number.className = 'history-number';
-  number.textContent = `Cuadre #${record.id}`;
+  number.textContent = date
+      ? `Cuadre #${record.id} · ${formatTime(date)}`
+      : `Cuadre #${record.id}`;
   const title = document.createElement('h3');
-  title.textContent = formatDate(record.record_date);
+  title.textContent = date ? formatFullDate(date) : 'Sin fecha';
   titleBox.appendChild(number);
   titleBox.appendChild(title);
   const author = document.createElement('p');
@@ -123,26 +165,96 @@ function buildCard(record) {
   return card;
 }
 
-async function loadHistory(date) {
+function buildDaySection(key, date, records) {
+  const section = document.createElement('section');
+  section.className = 'history-day';
+
+  const header = document.createElement('div');
+  header.className = 'history-day-header';
+
+  const heading = document.createElement('h3');
+  heading.textContent = formatDayHeading(date);
+  header.appendChild(heading);
+
+  if (records.length > 0) {
+    const count = document.createElement('span');
+    count.className = 'history-day-count';
+    count.textContent = records.length === 1 ? '1 cuadre' : `${records.length} cuadres`;
+    header.appendChild(count);
+  }
+
+  section.appendChild(header);
+
+  const cards = document.createElement('div');
+  cards.className = 'history-day-cards';
+
+  if (records.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'history-empty';
+    empty.textContent = key === todayKey()
+        ? 'Todavía no hay cuadres registrados hoy.'
+        : 'No hay cuadres para esa fecha.';
+    cards.appendChild(empty);
+  } else {
+    // Dentro del día se ordena por hora, del más reciente al más antiguo.
+    records
+        .sort((a, b) => b.date - a.date || Number(b.record.id) - Number(a.record.id))
+        .forEach(item => cards.appendChild(buildCard(item.record, item.date)));
+  }
+
+  section.appendChild(cards);
+  return section;
+}
+
+function renderHistory() {
   const container = document.getElementById('cuadreHistory');
   if (!container) {
     return;
   }
 
-  const url = date ? `/api/cuadres?date=${encodeURIComponent(date)}` : '/api/cuadres';
-  const response = await fetch(url);
-  const records = await response.json();
+  const targetKey = selectedDay || todayKey();
+  const recordsForDay = [];
+
+  allRecords.forEach(record => {
+    const date = parseRecordDate(record);
+    if (!date) {
+      return;
+    }
+    if (toDateKey(date) === targetKey) {
+      recordsForDay.push({ record, date });
+    }
+  });
 
   container.innerHTML = '';
-  if (!records || records.length === 0) {
+  container.appendChild(buildDaySection(targetKey, dateFromKey(targetKey), recordsForDay));
+}
+
+async function loadHistory(day) {
+  const container = document.getElementById('cuadreHistory');
+  if (!container) {
+    return;
+  }
+
+  selectedDay = day || '';
+
+  let records = [];
+  try {
+    const response = await fetch('/api/cuadres');
+    if (!response.ok) {
+      throw new Error('No se pudo cargar el historial');
+    }
+    records = await response.json();
+  } catch (error) {
+    container.innerHTML = '';
     const empty = document.createElement('div');
     empty.className = 'history-empty';
-    empty.textContent = date ? 'No hay cuadres para esa fecha.' : 'No hay cuadres registrados.';
+    empty.textContent = 'No se pudo cargar el historial. Intenta de nuevo.';
     container.appendChild(empty);
     return;
   }
 
-  records.forEach(record => container.appendChild(buildCard(record)));
+  allRecords = Array.isArray(records) ? records : [];
+  renderHistory();
 }
 
 function initHistory() {
@@ -160,6 +272,27 @@ function initHistory() {
       loadHistory('');
     });
   }
+
+  let currentDay = todayKey();
+  const refreshForNewDay = () => {
+    const day = todayKey();
+    if (day === currentDay) {
+      return;
+    }
+    currentDay = day;
+    if (dateInput) {
+      dateInput.value = '';
+    }
+    // Al pasar el día el historial se limpia y la guía muestra la fecha nueva.
+    loadHistory('');
+  };
+
+  window.setInterval(refreshForNewDay, 30000);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      refreshForNewDay();
+    }
+  });
 
   loadHistory('');
 }

@@ -165,6 +165,42 @@ document.querySelectorAll('.cash-input').forEach(input => {
 
 document.getElementById('add-row').addEventListener('click', addRow);
 
+function toLocalDateKey(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function buildRecordDate(rawDate) {
+  const now = new Date();
+  if (!rawDate) {
+    return now.toISOString();
+  }
+
+  const [year, month, day] = rawDate.split('-').map(Number);
+  if (!year || !month || !day) {
+    return now.toISOString();
+  }
+
+  // Conserva el día elegido en el cuadre y la hora real en que se registra,
+  // para poder ordenar el historial por hora dentro de cada día.
+  return new Date(
+      year,
+      month - 1,
+      day,
+      now.getHours(),
+      now.getMinutes(),
+      now.getSeconds(),
+      now.getMilliseconds()
+  ).toISOString();
+}
+
+const recordDateInput = document.getElementById('recordDate');
+if (recordDateInput && !recordDateInput.value) {
+  recordDateInput.value = toLocalDateKey(new Date());
+}
+
 document.getElementById('saveCuadre').addEventListener('click', async () => {
   const entries = [...document.querySelectorAll('.cash-row')].map((row, index) => ({
     name: row.dataset.name || row.querySelector('.cash-name-input')?.value || `Campo ${index + 1}`,
@@ -175,7 +211,7 @@ document.getElementById('saveCuadre').addEventListener('click', async () => {
 
   const rawDate = document.getElementById('recordDate').value;
   const payload = {
-    record_date: rawDate ? new Date(`${rawDate}T12:00:00`).toISOString() : new Date().toISOString(),
+    record_date: buildRecordDate(rawDate),
     base_value: getInputValue(baseValueInput),
     notes: 'Cuadre generado desde la interfaz',
     entries,

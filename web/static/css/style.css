@@ -371,6 +371,47 @@ input, select {
   gap: 16px;
 }
 
+.history-day {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.history-day-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.history-day-header h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  color: var(--text);
+  text-transform: capitalize;
+}
+
+.history-day-count {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  background: #f1f5f9;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 10px;
+}
+
+.history-day-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  gap: 16px;
+}
+
 .history-card {
   background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
   border: 1px solid var(--border);
@@ -474,6 +515,7 @@ input, select {
 }
 
 .history-empty {
+  grid-column: 1 / -1;
   border: 1px dashed var(--border);
   background: #f8fafc;
   color: var(--muted);
