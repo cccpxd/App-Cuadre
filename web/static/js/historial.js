@@ -101,7 +101,7 @@ function buildDetail(record) {
   return detail;
 }
 
-function buildCard(record, date) {
+function buildCard(record, date, number) {
   const card = document.createElement('div');
   card.className = 'history-card';
 
@@ -109,14 +109,14 @@ function buildCard(record, date) {
   header.className = 'history-card-header';
 
   const titleBox = document.createElement('div');
-  const number = document.createElement('span');
-  number.className = 'history-number';
-  number.textContent = date
-      ? `Cuadre #${record.id} · ${formatTime(date)}`
-      : `Cuadre #${record.id}`;
+  const label = document.createElement('span');
+  label.className = 'history-number';
+  label.textContent = date
+      ? `Cuadre #${number} · ${formatTime(date)}`
+      : `Cuadre #${number}`;
   const title = document.createElement('h3');
   title.textContent = date ? formatFullDate(date) : 'Sin fecha';
-  titleBox.appendChild(number);
+  titleBox.appendChild(label);
   titleBox.appendChild(title);
   const author = document.createElement('p');
   author.className = 'history-author';
@@ -196,10 +196,17 @@ function buildDaySection(key, date, records) {
         : 'No hay cuadres para esa fecha.';
     cards.appendChild(empty);
   } else {
-    // Dentro del día se ordena por hora, del más reciente al más antiguo.
-    records
-        .sort((a, b) => b.date - a.date || Number(b.record.id) - Number(a.record.id))
-        .forEach(item => cards.appendChild(buildCard(item.record, item.date)));
+    // La numeración se reinicia en cada día: el primer cuadre del día es el #1.
+    const chronological = [...records].sort(
+        (a, b) => a.date - b.date || Number(a.record.id) - Number(b.record.id)
+    );
+    const numbers = new Map();
+    chronological.forEach((item, index) => numbers.set(item.record.id, index + 1));
+
+    // En pantalla se muestra primero el más reciente.
+    [...chronological].reverse().forEach(item => {
+      cards.appendChild(buildCard(item.record, item.date, numbers.get(item.record.id)));
+    });
   }
 
   section.appendChild(cards);
