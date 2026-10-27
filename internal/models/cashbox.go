@@ -17,6 +17,8 @@ type CashBoxEntry struct {
 // CashBoxRecord representa la información consolidada de un cuadre de caja.
 type CashBoxRecord struct {
 	ID         uint           `gorm:"primaryKey" json:"id"`
+	UserID     uint           `gorm:"index" json:"-"`
+	User       AdminUser      `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"-"`
 	RecordDate time.Time      `gorm:"not null" json:"record_date"`
 	BaseValue  float64        `gorm:"not null;default:0" json:"base_value"`
 	TotalValue float64        `gorm:"not null;default:0" json:"total_value"`

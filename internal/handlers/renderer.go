@@ -15,28 +15,49 @@ type TemplateRenderer struct {
 	templates map[string]*template.Template
 }
 
-// NewTemplateRenderer combina base.html con cada página por separado.
+// NewTemplateRenderer combina la base con cada página por separado.
 // Lee las plantillas desde templatesDir dentro del sistema de archivos recibido.
 func NewTemplateRenderer(files fs.FS, templatesDir string) (*TemplateRenderer, error) {
-	basePath := path.Join(templatesDir, "base.html")
+	baseCandidates := []string{
+		path.Join(templatesDir, "base.tmpl"),
+		path.Join(templatesDir, "base.html"),
+	}
 
-	pages, err := fs.Glob(files, path.Join(templatesDir, "*.html"))
-	if err != nil {
-		return nil, err
+	basePath := ""
+	for _, candidate := range baseCandidates {
+		if _, err := fs.Stat(files, candidate); err == nil {
+			basePath = candidate
+			break
+		}
+	}
+	if basePath == "" {
+		return nil, fmt.Errorf("no se encontró la plantilla base en %s", templatesDir)
+	}
+
+	pagePatterns := []string{
+		path.Join(templatesDir, "*.tmpl"),
+		path.Join(templatesDir, "*.html"),
 	}
 
 	templates := make(map[string]*template.Template)
-	for _, page := range pages {
-		name := path.Base(page)
-		if name == "base.html" || name == "layout.html" {
-			continue
+	for _, pattern := range pagePatterns {
+		pages, err := fs.Glob(files, pattern)
+		if err != nil {
+			return nil, err
 		}
 
-		parsed, err := template.ParseFS(files, basePath, page)
-		if err != nil {
-			return nil, fmt.Errorf("error cargando plantilla %s: %w", name, err)
+		for _, page := range pages {
+			name := path.Base(page)
+			if name == path.Base(basePath) || name == "layout.tmpl" || name == "layout.html" {
+				continue
+			}
+
+			parsed, err := template.ParseFS(files, basePath, page)
+			if err != nil {
+				return nil, fmt.Errorf("error cargando plantilla %s: %w", name, err)
+			}
+			templates[name] = parsed
 		}
-		templates[name] = parsed
 	}
 
 	if len(templates) == 0 {

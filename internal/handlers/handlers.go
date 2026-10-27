@@ -1,54 +1,69 @@
 package handlers
 
 import (
+	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
-	"appcuadre/internal/database"
 	"appcuadre/internal/models"
 	"appcuadre/internal/services"
 
 	"github.com/gin-gonic/gin"
 )
 
+// AppHandler agrupa los endpoints de cuadres, avícola y configuración. Recibe
+// sus servicios por el constructor, así no depende de variables globales.
+type AppHandler struct {
+	cashBox       *services.CashBoxService
+	avicola       *services.AvicolaService
+	configuration *services.ConfigurationService
+	logger        *slog.Logger
+}
+
+func NewAppHandler(
+	cashBox *services.CashBoxService,
+	avicola *services.AvicolaService,
+	configuration *services.ConfigurationService,
+	logger *slog.Logger,
+) *AppHandler {
+	return &AppHandler{cashBox: cashBox, avicola: avicola, configuration: configuration, logger: logger}
+}
+
 func RenderDashboard(c *gin.Context) {
-	c.HTML(http.StatusOK, "dashboard.html", gin.H{
-		"title":       "Dashboard",
+	c.HTML(http.StatusOK, "dashboard.tmpl", pageData(c, "Dashboard", gin.H{
 		"currentDate": time.Now().Format("2006-01-02"),
-	})
+	}))
 }
 
 func RenderCuadre(c *gin.Context) {
-	c.HTML(http.StatusOK, "cuadre.html", gin.H{
-		"title":   "Cuadre de caja",
+	c.HTML(http.StatusOK, "cuadre.tmpl", pageData(c, "Cuadre de caja", gin.H{
 		"entries": services.BuildDefaultCashBoxEntries(),
-	})
+	}))
 }
 
 func RenderAvicola(c *gin.Context) {
-	c.HTML(http.StatusOK, "avicola.html", gin.H{
-		"title": "Avícola",
-	})
+	c.HTML(http.StatusOK, "avicola.tmpl", pageData(c, "Avícola", gin.H{}))
 }
 
 func RenderConfiguracion(c *gin.Context) {
-	c.HTML(http.StatusOK, "configuracion.html", gin.H{
-		"title": "Configuración",
-	})
+	c.HTML(http.StatusOK, "configuracion.tmpl", pageData(c, "Configuración", gin.H{}))
 }
 
 func RenderHistorial(c *gin.Context) {
-	c.HTML(http.StatusOK, "historial.html", gin.H{
-		"title": "Historial",
-	})
+	c.HTML(http.StatusOK, "historial.tmpl", pageData(c, "Historial", gin.H{}))
 }
 
-func ListCuadres(c *gin.Context) {
-	records, err := services.ListCashBoxRecords()
+func (h *AppHandler) ListCuadres(c *gin.Context) {
+	user, ok := currentUser(c)
+	if !ok {
+		return
+	}
+
+	records, err := h.cashBox.ListCashBoxRecords(user.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondServiceError(c, h.logger, err)
 		return
 	}
 
@@ -68,10 +83,15 @@ func ListCuadres(c *gin.Context) {
 	c.JSON(http.StatusOK, filtered)
 }
 
-func CreateCuadre(c *gin.Context) {
+func (h *AppHandler) CreateCuadre(c *gin.Context) {
+	user, ok := currentUser(c)
+	if !ok {
+		return
+	}
+
 	var record models.CashBoxRecord
 	if err := c.ShouldBindJSON(&record); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": invalidBodyMessage})
 		return
 	}
 	record.PreparedBy = strings.TrimSpace(record.PreparedBy)
@@ -94,22 +114,27 @@ func CreateCuadre(c *gin.Context) {
 		}
 	}
 
-	saved, err := services.CreateCashBoxRecord(record)
+	saved, err := h.cashBox.CreateCashBoxRecord(user.ID, record)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondServiceError(c, h.logger, err)
 		return
 	}
 	c.JSON(http.StatusCreated, saved)
 }
 
-func GetCuadre(c *gin.Context) {
+func (h *AppHandler) GetCuadre(c *gin.Context) {
+	user, ok := currentUser(c)
+	if !ok {
+		return
+	}
+
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "id inválido"})
 		return
 	}
 
-	record, err := services.GetCashBoxRecordByID(uint(id))
+	record, err := h.cashBox.GetCashBoxRecordByID(user.ID, uint(id))
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "cuadre no encontrado"})
 		return
@@ -117,11 +142,16 @@ func GetCuadre(c *gin.Context) {
 	c.JSON(http.StatusOK, record)
 }
 
-func ListAvicola(c *gin.Context) {
+func (h *AppHandler) ListAvicola(c *gin.Context) {
+	user, ok := currentUser(c)
+	if !ok {
+		return
+	}
+
 	selectedDate := strings.TrimSpace(c.Query("date"))
-	movements, err := services.ListAvicolaMovements(selectedDate)
+	movements, err := h.avicola.ListAvicolaMovements(user.ID, selectedDate)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondServiceError(c, h.logger, err)
 		return
 	}
 
@@ -129,9 +159,9 @@ func ListAvicola(c *gin.Context) {
 		selectedDate = time.Now().Format("2006-01-02")
 	}
 
-	balance, err := services.GetAvicolaBalance(selectedDate)
+	balance, err := h.avicola.GetAvicolaBalance(user.ID, selectedDate)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondServiceError(c, h.logger, err)
 		return
 	}
 
@@ -142,45 +172,56 @@ func ListAvicola(c *gin.Context) {
 	})
 }
 
-func CreateAvicolaMovement(c *gin.Context) {
-	var movement models.AvicolaLedger
-	if err := c.ShouldBindJSON(&movement); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+func (h *AppHandler) CreateAvicolaMovement(c *gin.Context) {
+	user, ok := currentUser(c)
+	if !ok {
 		return
 	}
 
-	saved, err := services.CreateAvicolaMovement(movement)
+	var movement models.AvicolaLedger
+	if err := c.ShouldBindJSON(&movement); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": invalidBodyMessage})
+		return
+	}
+
+	saved, err := h.avicola.CreateAvicolaMovement(user.ID, movement)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		respondServiceError(c, h.logger, err)
 		return
 	}
 	c.JSON(http.StatusCreated, saved)
 }
 
-func GetConfiguration(c *gin.Context) {
-	cfg, err := services.GetSystemConfiguration()
+func (h *AppHandler) GetConfiguration(c *gin.Context) {
+	user, ok := currentUser(c)
+	if !ok {
+		return
+	}
+
+	cfg, err := h.configuration.GetSystemConfiguration(user.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondServiceError(c, h.logger, err)
 		return
 	}
 	c.JSON(http.StatusOK, cfg)
 }
 
-func UpdateConfiguration(c *gin.Context) {
-	var cfg models.Configuration
-	if err := c.ShouldBindJSON(&cfg); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+func (h *AppHandler) UpdateConfiguration(c *gin.Context) {
+	user, ok := currentUser(c)
+	if !ok {
 		return
 	}
 
-	updated, err := services.SaveSystemConfiguration(cfg)
+	var cfg models.Configuration
+	if err := c.ShouldBindJSON(&cfg); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": invalidBodyMessage})
+		return
+	}
+
+	updated, err := h.configuration.SaveSystemConfiguration(user.ID, cfg)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondServiceError(c, h.logger, err)
 		return
 	}
 	c.JSON(http.StatusOK, updated)
-}
-
-func init() {
-	_ = database.DB
 }

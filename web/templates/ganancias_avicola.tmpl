@@ -1,0 +1,84 @@
+{{ template "base" . }}
+
+{{ define "content" }}
+<div class="page-header">
+  <div>
+    <h2>Ganancias Avícola</h2>
+    <p class="page-subtitle">Registro independiente del módulo Avícola de saldos.</p>
+  </div>
+</div>
+
+<div class="panel form-panel profit-form-panel">
+  <div class="row-inline">
+    <label>
+      Fecha y hora local
+      <input id="profitRecordedAt" type="datetime-local" value="{{ .nowLocal }}" />
+    </label>
+    <label>
+      Observaciones
+      <input id="profitNotes" type="text" maxlength="500" placeholder="Opcional" autocomplete="off" />
+    </label>
+  </div>
+
+  <div class="profit-sections">
+    {{ range .sections }}
+    <section class="profit-section" data-section="{{ .Code }}">
+      <div class="profit-section-header">
+        <div>
+          <span class="panel-kicker">Sección</span>
+          <h3>{{ .Title }}</h3>
+        </div>
+        <button type="button" class="button secondary add-profit-field" data-section="{{ .Code }}">
+          Agregar campo
+        </button>
+      </div>
+
+      <div class="profit-lines" data-section-lines="{{ .Code }}">
+        <div class="profit-line" data-default="true">
+          <label>
+            Campo
+            <input type="text" class="profit-concept" value="{{ .DefaultConcept }}" maxlength="120" />
+          </label>
+          <label>
+            Valor
+            <input type="text" class="profit-amount" value="0" inputmode="numeric" />
+          </label>
+        </div>
+      </div>
+
+      <div class="profit-section-total">
+        <span>Total {{ .Title }}</span>
+        <strong data-section-total="{{ .Code }}">$ 0</strong>
+      </div>
+    </section>
+    {{ end }}
+  </div>
+
+  <div class="profit-section-total profit-gain-total">
+    <span>Ganancia (caja principal + caja auxiliar)</span>
+    <strong id="profitGainTotal">$ 0</strong>
+  </div>
+
+  <div class="form-actions">
+    <button class="button primary" id="saveProfit" type="button">Guardar ganancia</button>
+    <button class="button secondary" id="clearProfit" type="button">Limpiar</button>
+  </div>
+</div>
+
+<template id="profitLineTemplate">
+  <div class="profit-line" data-default="false">
+    <label>
+      Campo
+      <input type="text" class="profit-concept" value="Nuevo campo" maxlength="120" />
+    </label>
+    <label>
+      Valor
+      <input type="text" class="profit-amount" value="0" inputmode="numeric" />
+    </label>
+    <button type="button" class="remove-row remove-profit-line" title="Eliminar campo" aria-label="Eliminar campo">×</button>
+  </div>
+</template>
+
+<script src="/static/js/profit_common.js"></script>
+<script src="/static/js/ganancias_avicola.js"></script>
+{{ end }}

@@ -49,12 +49,16 @@ async function loadAvicolaData() {
     const signedAmount = item.movement_type === 'egreso' ? -(Number(item.amount) || 0) : Number(item.amount) || 0;
     const row = document.createElement('div');
     row.className = 'history-item';
-    row.innerHTML = `
-      <strong>${item.movement_type}</strong>
-      <span>${item.description}</span>
-      <small>${formatDate(item.entry_date)}</small>
-      <span>${formatMoney(signedAmount)}</span>
-    `;
+    // textContent y no innerHTML: la descripción la escribe el usuario.
+    const typeLabel = document.createElement('strong');
+    typeLabel.textContent = item.movement_type;
+    const descriptionLabel = document.createElement('span');
+    descriptionLabel.textContent = item.description;
+    const dateLabel = document.createElement('small');
+    dateLabel.textContent = formatDate(item.entry_date);
+    const amountLabel = document.createElement('span');
+    amountLabel.textContent = formatMoney(signedAmount);
+    row.append(typeLabel, descriptionLabel, dateLabel, amountLabel);
     historyBox.appendChild(row);
   });
 

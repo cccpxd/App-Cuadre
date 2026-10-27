@@ -81,7 +81,7 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 }
 
 func (h *AuthHandler) renderLogin(c *gin.Context, status int, message, email string) {
-	c.HTML(status, "login.html", gin.H{
+	c.HTML(status, "login.tmpl", gin.H{
 		"title": "Iniciar sesión",
 		"error": message,
 		"email": email,

@@ -1,0 +1,42 @@
+{{ template "base" . }}
+
+{{ define "content" }}
+<div class="page-header">
+  <div>
+    <h2>Consulta Ganancia Avícola</h2>
+    <p class="page-subtitle">
+      Consulta por periodos automáticos o por un rango de fechas manual.
+      Zona horaria de respaldo: {{ .appTimezone }}.
+    </p>
+  </div>
+</div>
+
+<div class="panel history-panel profit-query-panel">
+  <div class="profit-query-toolbar">
+    <div class="profit-presets" id="profitPresets">
+      {{ range .periods }}
+      <button type="button" class="button secondary profit-preset" data-period="{{ .Code }}">{{ .Label }}</button>
+      {{ end }}
+    </div>
+
+    <div class="profit-manual-range">
+      <label>
+        Desde
+        <input id="profitFrom" type="date" value="{{ .today }}" />
+      </label>
+      <label>
+        Hasta
+        <input id="profitTo" type="date" value="{{ .today }}" />
+      </label>
+      <button type="button" class="button primary" id="applyProfitRange">Consultar rango</button>
+    </div>
+  </div>
+
+  <div class="profit-range-label" id="profitRangeLabel">Cargando consulta...</div>
+  <div class="profit-summary-grid" id="profitSummary"></div>
+  <div class="history-list" id="profitRecords"></div>
+</div>
+
+<script src="/static/js/profit_common.js"></script>
+<script src="/static/js/consulta_ganancias.js"></script>
+{{ end }}

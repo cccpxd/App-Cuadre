@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ .title }}</title>
+  <link rel="stylesheet" href="/static/css/style.css?v=2026-10-22-19-51" />
+  <link rel="stylesheet" href="/static/css/auth.css?v=2026-10-23-1" />
+</head>
+<body class="login-page">
+  <main class="login-card">
+    <h1>Cuadre</h1>
+    <p class="login-subtitle">Acceso de usuarios</p>
+
+    {{ if .error }}
+    <div class="login-error" role="alert">{{ .error }}</div>
+    {{ end }}
+
+    <form class="login-form" method="post" action="/login">
+      <label>
+        Email
+        <input type="email" name="email" value="{{ .email }}" autocomplete="username" required autofocus />
+      </label>
+      <label>
+        Contraseña
+        <input type="password" name="password" autocomplete="current-password" required />
+      </label>
+      <button type="submit" class="button primary">Iniciar sesión</button>
+    </form>
+  </main>
+</body>
+</html>

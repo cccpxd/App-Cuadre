@@ -1,12 +1,26 @@
 package services
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
-	"appcuadre/internal/database"
 	"appcuadre/internal/models"
+
+	"gorm.io/gorm"
 )
+
+// CashBoxService guarda y consulta los cuadres de caja.
+type CashBoxService struct {
+	db *gorm.DB
+}
+
+func NewCashBoxService(db *gorm.DB) (*CashBoxService, error) {
+	if db == nil {
+		return nil, errors.New("cashbox service: falta la base de datos")
+	}
+	return &CashBoxService{db: db}, nil
+}
 
 func CalculateCashBox(entries []models.CashBoxEntry, baseValue float64) (float64, float64) {
 	total := 0.0
@@ -30,54 +44,73 @@ func BuildDefaultCashBoxEntries() []models.CashBoxEntry {
 	return entries
 }
 
-func CreateCashBoxRecord(record models.CashBoxRecord) (models.CashBoxRecord, error) {
+func (s *CashBoxService) CreateCashBoxRecord(userID uint, record models.CashBoxRecord) (models.CashBoxRecord, error) {
+	if userID == 0 {
+		return models.CashBoxRecord{}, fmt.Errorf("falta el usuario del cuadre")
+	}
 	if record.RecordDate.IsZero() {
 		record.RecordDate = time.Now()
 	}
 
+	record.UserID = userID
 	entries := record.Entries
 	record.Entries = nil
 	record.TotalValue, record.Difference = CalculateCashBox(entries, record.BaseValue)
 
-	result := database.DB.Create(&record)
-	if result.Error != nil {
-		return models.CashBoxRecord{}, result.Error
-	}
-
-	for i := range entries {
-		entries[i].CashBoxRecordID = record.ID
-		entries[i].OrderIndex = i
-	}
-
-	if len(entries) > 0 {
-		if err := database.DB.Create(&entries).Error; err != nil {
-			return models.CashBoxRecord{}, err
+	err := s.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(&record).Error; err != nil {
+			return err
 		}
+
+		for i := range entries {
+			entries[i].CashBoxRecordID = record.ID
+			entries[i].OrderIndex = i
+		}
+
+		if len(entries) > 0 {
+			if err := tx.Create(&entries).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return models.CashBoxRecord{}, err
 	}
 
 	record.Entries = entries
 	return record, nil
 }
 
-func ListCashBoxRecords() ([]models.CashBoxRecord, error) {
+func (s *CashBoxService) ListCashBoxRecords(userID uint) ([]models.CashBoxRecord, error) {
 	var records []models.CashBoxRecord
-	result := database.DB.Preload("Entries").Order("record_date desc, id desc").Find(&records)
+	result := s.db.
+		Preload("Entries").
+		Where("user_id = ?", userID).
+		Order("record_date desc, id desc").
+		Find(&records)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	return records, nil
 }
 
-func GetCashBoxRecordByID(id uint) (models.CashBoxRecord, error) {
+func (s *CashBoxService) GetCashBoxRecordByID(userID, id uint) (models.CashBoxRecord, error) {
 	var record models.CashBoxRecord
-	result := database.DB.Preload("Entries").First(&record, id)
+	result := s.db.
+		Preload("Entries").
+		Where("user_id = ?", userID).
+		First(&record, id)
 	if result.Error != nil {
 		return models.CashBoxRecord{}, result.Error
 	}
 	return record, nil
 }
 
-func UpdateCashBoxRecord(record models.CashBoxRecord) error {
+func (s *CashBoxService) UpdateCashBoxRecord(userID uint, record models.CashBoxRecord) error {
+	if userID == 0 {
+		return fmt.Errorf("falta el usuario del cuadre")
+	}
 	if record.RecordDate.IsZero() {
 		record.RecordDate = time.Now()
 	}
@@ -86,16 +119,23 @@ func UpdateCashBoxRecord(record models.CashBoxRecord) error {
 	record.Entries = nil
 	record.TotalValue, record.Difference = CalculateCashBox(entries, record.BaseValue)
 
-	tx := database.DB.Begin()
-	if err := tx.Model(&models.CashBoxRecord{}).Where("id = ?", record.ID).Updates(map[string]interface{}{
-		"record_date": record.RecordDate,
-		"base_value":  record.BaseValue,
-		"total_value": record.TotalValue,
-		"difference":  record.Difference,
-		"notes":       record.Notes,
-	}).Error; err != nil {
+	tx := s.db.Begin()
+	updateResult := tx.Model(&models.CashBoxRecord{}).
+		Where("id = ? AND user_id = ?", record.ID, userID).
+		Updates(map[string]interface{}{
+			"record_date": record.RecordDate,
+			"base_value":  record.BaseValue,
+			"total_value": record.TotalValue,
+			"difference":  record.Difference,
+			"notes":       record.Notes,
+		})
+	if updateResult.Error != nil {
 		tx.Rollback()
-		return err
+		return updateResult.Error
+	}
+	if updateResult.RowsAffected == 0 {
+		tx.Rollback()
+		return fmt.Errorf("cuadre no encontrado")
 	}
 
 	if err := tx.Where("cash_box_record_id = ?", record.ID).Delete(&models.CashBoxEntry{}).Error; err != nil {

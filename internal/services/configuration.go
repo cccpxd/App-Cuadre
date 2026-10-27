@@ -1,29 +1,68 @@
 package services
 
 import (
-    "appcuadre/internal/database"
-    "appcuadre/internal/models"
+	"errors"
+	"fmt"
+
+	"appcuadre/internal/models"
+
+	"gorm.io/gorm"
 )
 
-func GetSystemConfiguration() (models.Configuration, error) {
-    var cfg models.Configuration
-    result := database.DB.FirstOrCreate(&cfg, models.Configuration{CompanyName: "Correspondencia"})
-    if result.Error != nil {
-        return models.Configuration{}, result.Error
-    }
-    return cfg, nil
+// ConfigurationService guarda y lee la configuración de cada usuario.
+type ConfigurationService struct {
+	db *gorm.DB
 }
 
-func SaveSystemConfiguration(cfg models.Configuration) (models.Configuration, error) {
-    if cfg.ID == 0 {
-        if err := database.DB.Create(&cfg).Error; err != nil {
-            return models.Configuration{}, err
-        }
-        return cfg, nil
-    }
+func NewConfigurationService(db *gorm.DB) (*ConfigurationService, error) {
+	if db == nil {
+		return nil, errors.New("configuration service: falta la base de datos")
+	}
+	return &ConfigurationService{db: db}, nil
+}
 
-    if err := database.DB.Save(&cfg).Error; err != nil {
-        return models.Configuration{}, err
-    }
-    return cfg, nil
+func (s *ConfigurationService) GetSystemConfiguration(userID uint) (models.Configuration, error) {
+	if userID == 0 {
+		return models.Configuration{}, fmt.Errorf("falta el usuario de la configuración")
+	}
+
+	var cfg models.Configuration
+	result := s.db.
+		Where("user_id = ?", userID).
+		Order("id").
+		Attrs(models.Configuration{
+			UserID:               userID,
+			CompanyName:          "Correspondencia",
+			DefaultCurrency:      "COP",
+			ShowAvicolaDashboard: true,
+			AllowCustomFields:    true,
+		}).
+		FirstOrCreate(&cfg)
+	if result.Error != nil {
+		return models.Configuration{}, result.Error
+	}
+	return cfg, nil
+}
+
+func (s *ConfigurationService) SaveSystemConfiguration(userID uint, cfg models.Configuration) (models.Configuration, error) {
+	current, err := s.GetSystemConfiguration(userID)
+	if err != nil {
+		return models.Configuration{}, err
+	}
+
+	updates := map[string]interface{}{
+		"company_name":           cfg.CompanyName,
+		"default_currency":       cfg.DefaultCurrency,
+		"show_avicola_dashboard": cfg.ShowAvicolaDashboard,
+		"allow_custom_fields":    cfg.AllowCustomFields,
+	}
+
+	if err := s.db.
+		Model(&models.Configuration{}).
+		Where("id = ? AND user_id = ?", current.ID, userID).
+		Updates(updates).Error; err != nil {
+		return models.Configuration{}, err
+	}
+
+	return s.GetSystemConfiguration(userID)
 }

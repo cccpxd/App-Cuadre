@@ -1,0 +1,24 @@
+{{ template "base" . }}
+
+{{ define "content" }}
+<div class="page-header">
+  <h2>Historial de cuadres</h2>
+</div>
+
+<div class="panel history-panel">
+  <div class="history-toolbar">
+    <div class="history-date-filter">
+      <label for="historyDateFilter">Consultar por fecha</label>
+      <input id="historyDateFilter" type="date" />
+    </div>
+    <div class="history-actions">
+      <button id="applyHistoryFilter" type="button" class="button primary">Consultar</button>
+      <button id="clearHistoryFilter" type="button" class="button secondary">Hoy</button>
+    </div>
+  </div>
+
+  <div id="cuadreHistory" class="history-list"></div>
+</div>
+
+<script src="/static/js/historial.js"></script>
+{{ end }}

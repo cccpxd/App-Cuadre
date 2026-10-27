@@ -1,0 +1,51 @@
+{{ template "base" . }}
+
+{{ define "content" }}
+<div class="page-header">
+  <h2>Dashboard</h2>
+  <span>{{ .currentDate }}</span>
+</div>
+
+<div class="cards-grid dashboard-grid">
+  <a class="card accent-blue dashboard-link" href="/cuadre">
+    <label>Cuadre de caja</label>
+    <strong>Nuevo cuadre</strong>
+    <small>Registrar y sumar valores</small>
+  </a>
+  <a class="card accent-green dashboard-link" href="/historial">
+    <label>Historial</label>
+    <strong>Ver cuadres</strong>
+    <small>Consulta por fechas</small>
+  </a>
+  <a class="card accent-orange dashboard-link" href="/avicola">
+    <label>Avícola</label>
+    <strong>Movimientos</strong>
+    <small>Ingresos y egresos</small>
+  </a>
+  <a class="card accent-green dashboard-link" href="/ganancias-avicola">
+    <label>Ganancias Avícola</label>
+    <strong>Nuevo cuadre</strong>
+    <small>Ganancia y cuadres de caja</small>
+  </a>
+  <a class="card accent-blue dashboard-link" href="/consulta-ganancias">
+    <label>Consulta Ganancia Avícola</label>
+    <strong>Consultar</strong>
+    <small>Semanal, quincenal y mensual</small>
+  </a>
+  <a class="card dashboard-link" href="/configuracion">
+    <label>Configuración</label>
+    <strong>Ajustes</strong>
+    <small>Preferencias del sistema</small>
+  </a>
+</div>
+
+<div class="panel empty-state-panel">
+  <h3>Estado del sistema</h3>
+  <p>Aún no has registrado cuadres ni movimientos. Aquí puedes empezar desde cualquier sección.</p>
+  <div class="quick-actions">
+    <a class="button primary" href="/cuadre">Crear cuadre</a>
+    <a class="button secondary" href="/avicola">Registrar avícola</a>
+    <a class="button secondary" href="/configuracion">Configurar</a>
+  </div>
+</div>
+{{ end }}

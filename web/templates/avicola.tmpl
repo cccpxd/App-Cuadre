@@ -1,0 +1,53 @@
+{{ template "base" . }}
+
+{{ define "content" }}
+<div class="page-header">
+  <h2>Avícola</h2>
+</div>
+
+<div class="avicola-shell">
+  <div class="panel avicola-form-panel">
+    <div class="panel-kicker">Registro rápido</div>
+    <div class="row-inline avicola-row-inline">
+      <label>
+        Tipo
+        <select id="movementType">
+          <option value="ingreso">Ingreso</option>
+          <option value="egreso">Egreso</option>
+        </select>
+      </label>
+      <label>
+        Valor
+        <input id="movementAmount" type="number" step="1000" value="0" />
+      </label>
+      <label>
+        Descripción
+        <input id="movementDescription" type="text" placeholder="Detalle del movimiento" />
+      </label>
+    </div>
+
+    <div class="form-actions">
+      <button class="button primary" id="saveAvicolaMovement">Guardar movimiento</button>
+    </div>
+  </div>
+
+  <div class="panel avicola-balance-panel">
+    <div class="balance-header">
+      <div>
+        <span class="panel-kicker">Saldo actual</span>
+        <strong id="avicolaBalance">$ 0</strong>
+      </div>
+      <div class="balance-controls">
+        <label class="date-filter-label">
+          Ver fecha
+          <input id="avicolaDateFilter" type="date" />
+        </label>
+        <span class="balance-pill">Avícola</span>
+      </div>
+    </div>
+    <div id="avicolaHistory" class="history-list avicola-history"></div>
+  </div>
+</div>
+
+<script src="/static/js/avicola.js"></script>
+{{ end }}

@@ -28,9 +28,9 @@ func (e AuthError) Error() string { return string(e) }
 const (
 	ErrInvalidCredentials AuthError = "credenciales inválidas"
 	ErrInvalidSession     AuthError = "sesión inválida"
-	ErrAdminEmailInvalid  AuthError = "ADMIN_EMAIL no es un email válido"
-	ErrAdminPasswordShort AuthError = "ADMIN_PASSWORD debe tener al menos 10 caracteres"
-	ErrAdminPasswordLong  AuthError = "ADMIN_PASSWORD no puede pasar de 72 bytes"
+	ErrUserEmailInvalid   AuthError = "el email del usuario no es válido"
+	ErrUserPasswordShort  AuthError = "la contraseña debe tener al menos 10 caracteres"
+	ErrUserPasswordLong   AuthError = "la contraseña no puede pasar de 72 bytes"
 )
 
 const (
@@ -69,21 +69,23 @@ func NewAuthService(db *gorm.DB, sessionTTL time.Duration) (*AuthService, error)
 	return &AuthService{db: db, sessionTTL: sessionTTL, now: time.Now}, nil
 }
 
-// EnsureAdmin crea el administrador si todavía no existe ninguno. Es
-// idempotente: si ya hay un administrador no cambia nada (ni el email ni la
-// contraseña). Devuelve true solo cuando lo creó.
-func (s *AuthService) EnsureAdmin(ctx context.Context, email, password string) (bool, error) {
-	var count int64
-	if err := s.db.WithContext(ctx).Model(&models.AdminUser{}).Count(&count).Error; err != nil {
-		return false, fmt.Errorf("contar administradores: %w", err)
-	}
-	if count > 0 {
-		return false, nil
+// EnsureUser crea un usuario si todavía no existe ese email. Es idempotente:
+// si el email ya existe no cambia nada (ni la contraseña). Devuelve true solo
+// cuando lo creó.
+func (s *AuthService) EnsureUser(ctx context.Context, email, password string) (bool, error) {
+	normalizedEmail := normalizeEmail(email)
+	if err := validateUserCredentials(normalizedEmail, password); err != nil {
+		return false, err
 	}
 
-	normalizedEmail := normalizeEmail(email)
-	if err := validateAdminCredentials(normalizedEmail, password); err != nil {
-		return false, err
+	var existing models.AdminUser
+	err := s.db.WithContext(ctx).Where("email = ?", normalizedEmail).First(&existing).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		// El usuario no existe: se crea abajo.
+	} else if err != nil {
+		return false, fmt.Errorf("buscar usuario: %w", err)
+	} else {
+		return false, nil
 	}
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcryptCost)
@@ -91,16 +93,16 @@ func (s *AuthService) EnsureAdmin(ctx context.Context, email, password string) (
 		return false, fmt.Errorf("crear hash de la contraseña: %w", err)
 	}
 
-	admin := models.AdminUser{
+	user := models.AdminUser{
 		Email:        normalizedEmail,
 		PasswordHash: string(hash),
 		CreatedAt:    s.now().UTC(),
 	}
 
 	// Si otra instancia lo creó al mismo tiempo, no es un error.
-	result := s.db.WithContext(ctx).Clauses(clause.OnConflict{DoNothing: true}).Create(&admin)
+	result := s.db.WithContext(ctx).Clauses(clause.OnConflict{DoNothing: true}).Create(&user)
 	if result.Error != nil {
-		return false, fmt.Errorf("crear administrador: %w", result.Error)
+		return false, fmt.Errorf("crear usuario: %w", result.Error)
 	}
 	return result.RowsAffected == 1, nil
 }
@@ -194,16 +196,16 @@ func normalizeEmail(email string) string {
 	return strings.ToLower(strings.TrimSpace(email))
 }
 
-func validateAdminCredentials(email, password string) error {
+func validateUserCredentials(email, password string) error {
 	address, err := mail.ParseAddress(email)
 	if err != nil || address.Address != email {
-		return ErrAdminEmailInvalid
+		return ErrUserEmailInvalid
 	}
 	if len(password) < minAdminPasswordLen {
-		return ErrAdminPasswordShort
+		return ErrUserPasswordShort
 	}
 	if len(password) > maxPasswordBytes {
-		return ErrAdminPasswordLong
+		return ErrUserPasswordLong
 	}
 	return nil
 }

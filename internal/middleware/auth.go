@@ -13,7 +13,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// SessionValidator convierte un token de sesión en el administrador dueño.
+type contextKey string
+
+const currentUserKey contextKey = "currentUser"
+
+// SessionValidator convierte un token de sesión en el usuario dueño.
 type SessionValidator interface {
 	Authenticate(ctx context.Context, rawToken string) (models.AdminUser, error)
 }
@@ -28,7 +32,7 @@ func RequireAuth(auth SessionValidator, cookieName string, logger *slog.Logger) 
 			return
 		}
 
-		_, err = auth.Authenticate(c.Request.Context(), token)
+		user, err := auth.Authenticate(c.Request.Context(), token)
 		switch {
 		case errors.Is(err, services.ErrInvalidSession):
 			deny(c)
@@ -36,9 +40,21 @@ func RequireAuth(auth SessionValidator, cookieName string, logger *slog.Logger) 
 			logger.ErrorContext(c.Request.Context(), "session_lookup_failed", "error", err)
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "error interno del servidor"})
 		default:
+			c.Set(string(currentUserKey), user)
 			c.Next()
 		}
 	}
+}
+
+// CurrentUser devuelve el usuario autenticado que RequireAuth guardó en el
+// contexto. Los handlers nunca deben leer un user_id enviado por el cliente.
+func CurrentUser(c *gin.Context) (models.AdminUser, bool) {
+	value, exists := c.Get(string(currentUserKey))
+	if !exists {
+		return models.AdminUser{}, false
+	}
+	user, ok := value.(models.AdminUser)
+	return user, ok
 }
 
 func deny(c *gin.Context) {

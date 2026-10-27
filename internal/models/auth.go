@@ -2,8 +2,8 @@ package models
 
 import "time"
 
-// AdminUser es la cuenta del administrador. La app es privada: no hay registro
-// público, el administrador se crea desde variables de entorno.
+// AdminUser es una cuenta de usuario de la aplicación. La app es privada: no
+// hay registro público, los usuarios se crean desde variables de entorno.
 type AdminUser struct {
 	ID           uint      `gorm:"primaryKey"`
 	Email        string    `gorm:"size:255;uniqueIndex;not null"`
